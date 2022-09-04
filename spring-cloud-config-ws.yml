@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-cloud-config-ws
+  labels:
+    app: spring-cloud-config-ws
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-cloud-config-ws
+  template:
+    metadata:
+      labels:
+        app: spring-cloud-config-ws
+    spec:
+      containers:
+        - name: spring-cloud-config-ws
+          image: nhoxnho1212/spring-cloud-config-ws:0.0.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8888
+              name: ws
+            - containerPort: 8889
+              name: manage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-config-server-ws-service
+spec:
+  ports:
+    - targetPort: 8889
+      port: 8889
+      name: http
+    - targetPort: 8888
+      port: 8888
+      name: https
+  selector:
+    app: spring-cloud-config-ws
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: config-ws
+  namespace: default
+spec:
+  ingressClassName: kong
+  rules:
+  - http:
+      paths:
+      - path: /config-ws
+        pathType: Prefix
+        backend:
+          service:
+            name: cloud-config-server-ws-service
+            port:
+              number: 8888
